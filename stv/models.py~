@@ -1,8 +1,0 @@
-from django.db import models
-
-class Image(models.model) :
-    image = models.FileField
-    image_url = models.URLField
-    first_seen = models.DateTimeField
-    last_seen = models.DateTimeField
-    
