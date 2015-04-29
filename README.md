@@ -30,7 +30,11 @@ stv chicago_election
 - uploading images, when appropriate, to the appropriate DocumentCloud bucket
 
 
-
+# Build order
+- Write a scraper for an electoin
+- Have `stv` dispatch that scraper from the command line
+- Have `stv` download the first five image from that scraper
+- Have `stv` uplaod the first five images. The downloading and uploading of images should be asynchrounous.
 
 
 
