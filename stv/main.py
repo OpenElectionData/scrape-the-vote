@@ -7,7 +7,6 @@ from argparse import ArgumentParser
 import os
 import shutil
 import fileinput
-from . import scrapers
 
 
 def dispatch():
@@ -43,7 +42,9 @@ def init(args) :
 
 def urlgrab(args) :
     if args.scrapername:
-        print('urlgrab', args.scrapername)
+        module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
+        scraper = getattr(module, 'Scraper')()
+        scraper.scrape()
     else:
         print('Please specify a scraper name')
 
