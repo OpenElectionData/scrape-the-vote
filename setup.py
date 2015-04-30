@@ -5,7 +5,7 @@ except ImportError :
 
 reqs = [
     'scrapelib',
-    'BeautifulSoup',
+    'beautifulsoup4',
 ]
 
 setup(

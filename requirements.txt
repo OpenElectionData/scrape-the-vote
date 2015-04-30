@@ -1,2 +1,2 @@
 scrapelib
-BeautifulSoup
+beautifulsoup4
