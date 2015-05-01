@@ -6,6 +6,7 @@ except ImportError :
 reqs = [
     'scrapelib',
     'beautifulsoup4',
+    'lxml',
 ]
 
 setup(
