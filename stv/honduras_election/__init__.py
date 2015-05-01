@@ -3,6 +3,7 @@
 
 import scrapelib
 from bs4 import BeautifulSoup
+import os
 
 
 class Scraper(scrapelib.Scraper):
@@ -31,7 +32,18 @@ class Scraper(scrapelib.Scraper):
         images = self.crawl()
         for image in images:
             print image[0]
-            # save stuff to table here
+            
+            head, tail = os.path.split(image[0])
+            if os.path.exists(tail):
+                print tail, "already exists"
+            else:
+                r = self.get(image[0], stream=True)
+                with open(tail, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        f.write(chunk)
+                        f.flush()
+
+            # upload to document cloud
 
     def crawl(self):
         start_url = self.base_url+"/app.php/divulgacionmonitoreo/reporte-presidente-departamentos"
@@ -48,7 +60,7 @@ class Scraper(scrapelib.Scraper):
                     for result_name, result_url in results:
                         r = self.get(self.base_url+result_url)
                         soup = BeautifulSoup(r.text)
-                        img_url = soup.find('img')["src"]
+                        img_url = self.base_url+soup.find('img')["src"]
                         img_info = {'department':dept_name,
                                    'municipality':muni_name,
                                    'poll': poll_name,

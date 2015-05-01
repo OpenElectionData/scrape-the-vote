@@ -3,6 +3,7 @@
 
 import scrapelib
 import lxml.html
+import os
 
 
 class Scraper(scrapelib.Scraper):
@@ -21,7 +22,7 @@ class Scraper(scrapelib.Scraper):
                                                 retry_attempts=retry_attempts,
                                                 retry_wait_seconds=retry_wait_seconds,
                                                 header_func=header_func )
-        self.base_url = "http://www.cec.md/"
+        self.base_url = "http://www.cec.md"
         self.election_id = 2
     
     def scrape(self):
@@ -31,10 +32,21 @@ class Scraper(scrapelib.Scraper):
         images = self.crawl()
         for image in images:
             print image[0]
-            # save stuff to table here
+
+            head, tail = os.path.split(image[0])
+            if os.path.exists(tail):
+                print tail, "already exists"
+            else:
+                r = self.get(image[0], stream=True)
+                with open(tail, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        f.write(chunk)
+                        f.flush()
+
+            # upload to document cloud
     
     def crawl(self):
-        start_url = self.base_url+"index.php?pag=news&id=1494&l=ro"
+        start_url = self.base_url+"/index.php?pag=news&id=1494&l=ro"
         r = self.get(start_url)
         
         tree = lxml.html.fromstring(r.text)
@@ -42,14 +54,16 @@ class Scraper(scrapelib.Scraper):
         city_urls = tree.xpath("//div[@class='news_title']//a/@href")
         
         for city_name, city_url in zip(city_names, city_urls):
-            print "CITY", city_name
+            print "CITY:     ", city_name
+            if city_url[0] != '/':
+                city_url = '/'+city_url
             r = self.get(self.base_url+city_url)
             tree = lxml.html.fromstring(r.text)
 
             sector_names = tree.xpath("//div[@id='print_div']//div[@class='text_content']//a/text()")
             img_urls = tree.xpath("//div[@id='print_div']//div[@class='text_content']//a/@href")
             for sector_name, img_url in zip(sector_names, img_urls):
-                print "SECTOR", sector_name
+                print "SECTOR:   ", sector_name
                 img_url = self.base_url+img_url
                 img_info = {
                     'city': city_name,
