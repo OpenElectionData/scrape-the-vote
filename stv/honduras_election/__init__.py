@@ -4,6 +4,8 @@
 import scrapelib
 from bs4 import BeautifulSoup
 import os
+from documentcloud import DocumentCloud
+from config import DC_USER, DC_PW
 
 
 class Scraper(scrapelib.Scraper):
@@ -23,27 +25,40 @@ class Scraper(scrapelib.Scraper):
                                                 retry_wait_seconds=retry_wait_seconds,
                                                 header_func=header_func )
         self.base_url = "http://siede.tse.hn"
-        self.election_id = 1 #what to do with the election_id? can this be set?
+        self.election_id = 1
+        self.img_dir ='honduras_election/images/'
+        self.dc_project = 'ndi'
+
 
     def scrape(self):
         print "RUNNING HONDURAS SCRAPER"
         print "-"*30
 
+        client = DocumentCloud(DC_USER, DC_PW)
+        project, created = client.projects.get_or_create_by_title(self.dc_project)
+
+        if not os.path.exists(self.img_dir):
+            os.makedirs(self.img_dir)
+
         images = self.crawl()
         for image in images:
             print image[0]
-            
+
             head, tail = os.path.split(image[0])
-            if os.path.exists(tail):
+            if os.path.exists(self.img_dir+tail):
                 print tail, "already exists"
             else:
                 r = self.get(image[0], stream=True)
-                with open(tail, 'wb') as f:
+                with open(self.img_dir+tail, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1024):
                         f.write(chunk)
                         f.flush()
 
             # upload to document cloud
+            metadata = image[1]
+            metadata['election_id'] = str(self.election_id)
+            # save image, get info about version
+            obj = client.documents.upload(self.img_dir+tail, project=str(project.id), data=metadata)
 
     def crawl(self):
         start_url = self.base_url+"/app.php/divulgacionmonitoreo/reporte-presidente-departamentos"
@@ -64,7 +79,15 @@ class Scraper(scrapelib.Scraper):
                         img_info = {'department':dept_name,
                                    'municipality':muni_name,
                                    'poll': poll_name,
-                                   'result': result_name}
+                                   'result': result_name,
+                                   'timestamp-server': '',
+                                   'timestamp-local': ''
+                                   }
+                        if 'last-modified' in r.headers:
+                            img_info['timestamp-server'] = r.headers['last-modified']
+                        if 'date' in r.headers:
+                            img_info['timestamp-local'] = r.headers['date']
+
                         yield (img_url, img_info, None)
 
     def _get_links(self, url):
