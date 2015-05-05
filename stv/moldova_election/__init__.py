@@ -34,6 +34,12 @@ class Scraper(scrapelib.Scraper):
         city_names = tree.xpath("//div[@class='news_title']//a/text()")
         city_urls = tree.xpath("//div[@class='news_title']//a/@href")
 
+        img_metadata = {
+            'timestamp-server': '',
+            'timestamp-local': '',
+            'election_id': str(self.election_id)
+        }
+
         for city_name, city_url in zip(city_names, city_urls):
             print "CITY:     ", city_name
             if city_url[0] != '/':
@@ -46,23 +52,13 @@ class Scraper(scrapelib.Scraper):
             for sector_name, img_url in zip(sector_names, img_urls):
                 print "SECTOR:   ", sector_name
                 img_url = self.base_url+img_url
-                img_info = {
-                    'municipality': city_name.encode('utf-8'),
-                    'sector': sector_name.encode('utf-8'),
-                    'timestamp-server': '',
-                    'timestamp-local': '',
-                    'election_id': str(self.election_id)
-                }
-                yield (img_url, img_info, None)
+                img_metadata['hierarchy'] = '/'+city_name.encode('utf-8')+'/'+sector_name.encode('utf-8')
+
+                yield (img_url, img_metadata, None)
 
             if not sector_names:
                 img_url = self.base_url+tree.xpath("//div[@id='print_div']//a/@href")[0]
-                img_info = {
-                    'municipality': city_name.encode('utf-8'),
-                    'sector': '',
-                    'timestamp-server': '',
-                    'timestamp-local': '',
-                    'election_id': str(self.election_id)
-                }
-                yield (img_url, img_info, None)
+                img_metadata['hierarchy'] = '/'+city_name.encode('utf-8')
+
+                yield (img_url, img_metadata, None)
 
