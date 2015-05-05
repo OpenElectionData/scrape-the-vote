@@ -27,18 +27,18 @@ class Scraper(scrapelib.Scraper):
 
     
     def crawl(self):
+        img_metadata = {
+            'timestamp-server': '',
+            'timestamp-local': '',
+            'election_id': str(self.election_id)
+        }
+
         start_url = self.base_url+"/index.php?pag=news&id=1494&l=ro"
         r = self.get(start_url)
         
         tree = lxml.html.fromstring(r.text)
         city_names = tree.xpath("//div[@class='news_title']//a/text()")
         city_urls = tree.xpath("//div[@class='news_title']//a/@href")
-
-        img_metadata = {
-            'timestamp-server': '',
-            'timestamp-local': '',
-            'election_id': str(self.election_id)
-        }
 
         for city_name, city_url in zip(city_names, city_urls):
             print "CITY:     ", city_name

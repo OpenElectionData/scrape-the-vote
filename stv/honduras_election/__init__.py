@@ -27,6 +27,12 @@ class Scraper(scrapelib.Scraper):
 
 
     def crawl(self):
+        img_metadata = {
+            'timestamp-server': '',
+            'timestamp-local': '',
+            'election_id': str(self.election_id)
+        }
+
         start_url = self.base_url+"/app.php/divulgacionmonitoreo/reporte-presidente-departamentos"
         departments = self._get_links(start_url)
         for dept_name, dept_url  in departments:
@@ -42,16 +48,12 @@ class Scraper(scrapelib.Scraper):
                         r = self.get(self.base_url+result_url)
                         soup = BeautifulSoup(r.text)
                         img_url = self.base_url+soup.find('img')["src"]
-                        img_info = {'department':dept_name,
-                                   'municipality':muni_name,
-                                   'poll': poll_name,
-                                   'result': result_name,
-                                   'timestamp-server': '',
-                                   'timestamp-local': '',
-                                   'election_id': str(self.election_id)
-                                   }
+                        img_metadata['hierarchy'] = '/'+dept_name+ \
+                                                    '/'+muni_name+ \
+                                                    '/'+poll_name+ \
+                                                    '/'+result_name
 
-                        yield (img_url, img_info, None)
+                        yield (img_url, img_metadata, None)
 
     def _get_links(self, url):
         r = self.get(url)
