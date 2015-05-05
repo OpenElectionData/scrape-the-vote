@@ -24,26 +24,34 @@ class Scraper(scrapelib.Scraper):
                                                 header_func=header_func )
         self.base_url = "http://www.cec.md"
         self.election_id = 2
+        self.img_dir ='moldova_election/images/'
+
     
     def scrape(self):
         print "RUNNING MOLDOVA SCRAPER"
         print "-"*30
         
+        if not os.path.exists(self.img_dir):
+            os.makedirs(self.img_dir)
+
         images = self.crawl()
         for image in images:
             print image[0]
 
             head, tail = os.path.split(image[0])
-            if os.path.exists(tail):
+            if os.path.exists(self.img_dir+tail):
                 print tail, "already exists"
             else:
                 r = self.get(image[0], stream=True)
-                with open(tail, 'wb') as f:
+                with open(self.img_dir+tail, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1024):
                         f.write(chunk)
                         f.flush()
-
-            # upload to document cloud
+                metadata = image[1]
+                metadata['timestamp-server'] = r.headers['last-modified'] if 'last-modified' in r.headers else ''
+                metadata['timestamp-local'] = r.headers['date'] if 'date' in r.headers else ''
+                metadata['election_id'] = str(self.election_id)
+                yield self.img_dir+tail, metadata
     
     def crawl(self):
         start_url = self.base_url+"/index.php?pag=news&id=1494&l=ro"
@@ -66,16 +74,16 @@ class Scraper(scrapelib.Scraper):
                 print "SECTOR:   ", sector_name
                 img_url = self.base_url+img_url
                 img_info = {
-                    'city': city_name,
-                    'sector': sector_name
+                    'municipality': city_name.encode('utf-8'),
+                    'sector': sector_name.encode('utf-8')
                 }
                 yield (img_url, img_info, None)
 
             if not sector_names:
                 img_url = self.base_url+tree.xpath("//div[@id='print_div']//a/@href")[0]
                 img_info = {
-                    'city': city_name,
-                    'sector': None
+                    'municipality': city_name.encode('utf-8'),
+                    'sector': ''
                 }
                 yield (img_url, img_info, None)
 
