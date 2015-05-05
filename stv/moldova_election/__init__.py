@@ -24,34 +24,7 @@ class Scraper(scrapelib.Scraper):
                                                 header_func=header_func )
         self.base_url = "http://www.cec.md"
         self.election_id = 2
-        self.img_dir ='moldova_election/images/'
 
-    
-    def scrape(self):
-        print "RUNNING MOLDOVA SCRAPER"
-        print "-"*30
-        
-        if not os.path.exists(self.img_dir):
-            os.makedirs(self.img_dir)
-
-        images = self.crawl()
-        for image in images:
-            print image[0]
-
-            head, tail = os.path.split(image[0])
-            if os.path.exists(self.img_dir+tail):
-                print tail, "already exists"
-            else:
-                r = self.get(image[0], stream=True)
-                with open(self.img_dir+tail, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        f.write(chunk)
-                        f.flush()
-                metadata = image[1]
-                metadata['timestamp-server'] = r.headers['last-modified'] if 'last-modified' in r.headers else ''
-                metadata['timestamp-local'] = r.headers['date'] if 'date' in r.headers else ''
-                metadata['election_id'] = str(self.election_id)
-                yield self.img_dir+tail, metadata
     
     def crawl(self):
         start_url = self.base_url+"/index.php?pag=news&id=1494&l=ro"
@@ -60,7 +33,7 @@ class Scraper(scrapelib.Scraper):
         tree = lxml.html.fromstring(r.text)
         city_names = tree.xpath("//div[@class='news_title']//a/text()")
         city_urls = tree.xpath("//div[@class='news_title']//a/@href")
-        
+
         for city_name, city_url in zip(city_names, city_urls):
             print "CITY:     ", city_name
             if city_url[0] != '/':
@@ -75,7 +48,10 @@ class Scraper(scrapelib.Scraper):
                 img_url = self.base_url+img_url
                 img_info = {
                     'municipality': city_name.encode('utf-8'),
-                    'sector': sector_name.encode('utf-8')
+                    'sector': sector_name.encode('utf-8'),
+                    'timestamp-server': '',
+                    'timestamp-local': '',
+                    'election_id': str(self.election_id)
                 }
                 yield (img_url, img_info, None)
 
@@ -83,7 +59,10 @@ class Scraper(scrapelib.Scraper):
                 img_url = self.base_url+tree.xpath("//div[@id='print_div']//a/@href")[0]
                 img_info = {
                     'municipality': city_name.encode('utf-8'),
-                    'sector': ''
+                    'sector': '',
+                    'timestamp-server': '',
+                    'timestamp-local': '',
+                    'election_id': str(self.election_id)
                 }
                 yield (img_url, img_info, None)
 
