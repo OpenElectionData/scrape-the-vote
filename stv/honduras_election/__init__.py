@@ -24,36 +24,7 @@ class Scraper(scrapelib.Scraper):
                                                 header_func=header_func )
         self.base_url = "http://siede.tse.hn"
         self.election_id = 1
-        self.img_dir ='honduras_election/images/'
 
-
-    def scrape(self):
-        print "RUNNING HONDURAS SCRAPER"
-        print "-"*30
-
-        if not os.path.exists(self.img_dir):
-            os.makedirs(self.img_dir)
-
-        images = self.crawl()
-        for image in images:
-            print image[0]
-
-            head, tail = os.path.split(image[0])
-            if os.path.exists(self.img_dir+tail):
-                print tail, "already exists"
-            else:
-                r = self.get(image[0], stream=True)
-                with open(self.img_dir+tail, 'wb') as f:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        f.write(chunk)
-                        f.flush()
-                metadata = image[1]
-                if 'last-modified' in r.headers:
-                    metadata['timestamp-server'] = r.headers['last-modified']
-                if 'date' in r.headers:
-                    metadata['timestamp-local'] = r.headers['date']
-                metadata['election_id'] = str(self.election_id)
-                yield self.img_dir+tail, metadata
 
     def crawl(self):
         start_url = self.base_url+"/app.php/divulgacionmonitoreo/reporte-presidente-departamentos"
@@ -76,7 +47,8 @@ class Scraper(scrapelib.Scraper):
                                    'poll': poll_name,
                                    'result': result_name,
                                    'timestamp-server': '',
-                                   'timestamp-local': ''
+                                   'timestamp-local': '',
+                                   'election_id': str(self.election_id)
                                    }
 
                         yield (img_url, img_info, None)
