@@ -48,6 +48,10 @@ class Scraper(scrapelib.Scraper):
                         f.write(chunk)
                         f.flush()
                 metadata = image[1]
+                if 'last-modified' in r.headers:
+                    metadata['timestamp-server'] = r.headers['last-modified']
+                if 'date' in r.headers:
+                    metadata['timestamp-local'] = r.headers['date']
                 metadata['election_id'] = str(self.election_id)
                 yield self.img_dir+tail, metadata
 
@@ -74,10 +78,6 @@ class Scraper(scrapelib.Scraper):
                                    'timestamp-server': '',
                                    'timestamp-local': ''
                                    }
-                        if 'last-modified' in r.headers:
-                            img_info['timestamp-server'] = r.headers['last-modified']
-                        if 'date' in r.headers:
-                            img_info['timestamp-local'] = r.headers['date']
 
                         yield (img_url, img_info, None)
 
