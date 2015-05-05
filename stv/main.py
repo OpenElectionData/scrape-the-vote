@@ -7,6 +7,8 @@ from argparse import ArgumentParser
 import os
 import shutil
 import fileinput
+from documentcloud import DocumentCloud
+from .config import DC_USER, DC_PW
 
 
 def dispatch():
@@ -33,9 +35,23 @@ def init(args) :
         print('Please specify a scraper name')
 
 def scrape(args) :
+    dc_project = 'ndi'
+
+    client = DocumentCloud(DC_USER, DC_PW)
+    project, created = client.projects.get_or_create_by_title(dc_project)
+
     if args.scrapername:
         module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
         scraper = getattr(module, 'Scraper')()
-        scraper.scrape()
+        images = scraper.scrape()
+
+        for img_path, metadata in images:
+            # get info about version here
+
+            # save image to document cloud
+            obj = client.documents.upload(img_path, project=str(project.id), data=metadata)
+
+            #delete image here
+
     else:
         print('Please specify a scraper name')
