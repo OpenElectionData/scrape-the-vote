@@ -10,6 +10,7 @@ import fileinput
 from documentcloud import DocumentCloud
 from .config import DC_USER, DC_PW
 import sqlite3
+import hashlib
 
 
 def dispatch():
@@ -40,6 +41,7 @@ def init(args) :
                         'election_id INTEGER,'                  \
                         'url TEXT,'                             \
                         'name TEXT,'                            \
+                        'file_hash TEXT,'                       \
                         'hierarchy TEXT,'                       \
                         'timestamp_server TEXT,'                \
                         'timestamp_local TEXT'                  \
@@ -78,10 +80,13 @@ def scrape(args) :
                 else: # post data required
                     r = scraper.post(image[0], data=image[2], stream=True)
 
+                hasher = hashlib.sha1()
                 with open(img_dir+tail, 'wb') as f:
                     for chunk in r.iter_content(chunk_size=1024):
+                        hasher.update(chunk)
                         f.write(chunk)
                         f.flush()
+                file_hash = hasher.hexdigest()
 
                 metadata = image[1]
                 metadata['timestamp-server'] = r.headers['last-modified'] if 'last-modified' in r.headers else ''
@@ -92,17 +97,24 @@ def scrape(args) :
                 with con:
                     cur = con.cursor()
                     insert_str = 'INSERT INTO Documents \
-                                (election_id,url,name,hierarchy,timestamp_server,timestamp_local) \
-                                VALUES ("%s","%s","%s","%s","%s","%s");' \
-                                %(metadata['election_id'],image[0],tail,metadata['hierarchy'],metadata['timestamp-server'],metadata['timestamp-local'])
-
-                    cur.execute(insert_str)
+                                (election_id,url,name,file_hash,hierarchy,timestamp_server,timestamp_local) \
+                                VALUES (?,?,?,?,?,?,?);'
+                    q_update = 'SELECT * FROM Documents where url=? and file_hash!=?'
+                    q_duplicate = 'SELECT * FROM Documents where url=? and file_hash=?'
+                    cur.execute(q_update,(image[0],file_hash))
+                    is_update = cur.fetchone()
+                    cur.execute(q_duplicate,(image[0],file_hash))
+                    is_duplicate = cur.fetchone()
+                    cur.execute(insert_str,(metadata['election_id'],image[0],tail,file_hash,metadata['hierarchy'],metadata['timestamp-server'],metadata['timestamp-local']))
                     con.commit()
 
-                # uploading image to document cloud
-                obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
+                if not is_duplicate:
+                    # do something here if image is an update of an image we've already seen
+
+                    # uploading image to document cloud
+                    obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
                 
-                #delete image here
+                #delete image file here
 
     else:
         print('Please specify a scraper name')
