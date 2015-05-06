@@ -31,7 +31,24 @@ def dispatch():
 
 def init(args) :
     if args.scrapername:
-        print('init', args.scrapername)
+        # create documents table if it doesn't exist
+        con = sqlite3.connect('documents.db')
+        with con:
+            cur = con.cursor()
+            sql_str = 'CREATE TABLE IF NOT EXISTS Documents ('  \
+                        'id INTEGER PRIMARY KEY,'               \
+                        'election_id INTEGER,'                  \
+                        'url TEXT,'                             \
+                        'name TEXT,'                            \
+                        'hierarchy TEXT,'                       \
+                        'timestamp_server TEXT,'                \
+                        'timestamp_local TEXT'                  \
+                        ');'
+
+            cur.execute(sql_str)
+            con.commit()
+
+        # create project on document cloud
     else:
         print('Please specify a scraper name')
 

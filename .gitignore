@@ -64,3 +64,6 @@ target/
 
 # iPython Notebook
 *.ipynb
+
+# Database
+*.db
