@@ -9,6 +9,7 @@ import shutil
 import fileinput
 from documentcloud import DocumentCloud
 from .config import DC_USER, DC_PW
+import sqlite3
 
 
 def dispatch():
@@ -44,7 +45,7 @@ def scrape(args) :
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
-    if args.scrapername:
+    if args.scrapername:   
         module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
         scraper = getattr(module, 'Scraper')()
         images = scraper.crawl()
@@ -57,20 +58,31 @@ def scrape(args) :
             else:
                 if not image[2]: # no post data required
                     r = scraper.get(image[0], stream=True)
-                    with open(img_dir+tail, 'wb') as f:
-                        for chunk in r.iter_content(chunk_size=1024):
-                            f.write(chunk)
-                            f.flush()
                 else: # post data required
-                    r = scraper.post(image[0], data=image[2])
-                    # handle this case
+                    r = scraper.post(image[0], data=image[2], stream=True)
+
+                with open(img_dir+tail, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        f.write(chunk)
+                        f.flush()
 
                 metadata = image[1]
                 metadata['timestamp-server'] = r.headers['last-modified'] if 'last-modified' in r.headers else ''
                 metadata['timestamp-local'] = r.headers['date'] if 'date' in r.headers else ''
                 
-                # sqlite stuff here
-                
+                # adding image to Documents table
+                con = sqlite3.connect('documents.db')
+                with con:
+                    cur = con.cursor()
+                    insert_str = 'INSERT INTO Documents \
+                                (election_id,url,name,hierarchy,timestamp_server,timestamp_local) \
+                                VALUES ("%s","%s","%s","%s","%s","%s");' \
+                                %(metadata['election_id'],image[0],tail,metadata['hierarchy'],metadata['timestamp-server'],metadata['timestamp-local'])
+
+                    cur.execute(insert_str)
+                    con.commit()
+
+                # uploading image to document cloud
                 obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
                 
                 #delete image here
