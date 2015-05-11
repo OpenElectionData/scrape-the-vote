@@ -5,6 +5,16 @@ Architecture.
 
 Key idea -- seperate the site-specific scraping code completely from storage
 
+## Setup
+
+Create a config file from the config example:
+
+```
+cp stv/config.example.py stv/config.py
+```
+
+In ```config.py```, enter your documentcloud credentials.
+
 ## Scrapers
 Each election will be it's own module. The scraper will be placed in the `__init__.py` of the module.
 
@@ -13,10 +23,10 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 - `election_id` attribute
 - `scrape` method. The scrape method should be a generator that yields a tuple like `('url_to_image', None)` if we can GET the image or or `(base_url, data)` if we have to make a POST request to get the image, where `data` is the post request.
 
-To run a scraper, the user will use the `stv` command line tool. For example, if we had an chicago_election
+To run a scraper, the user will use the `stv` command line tool. For example, to run a scraper called ```honduras_election```, use
 
 ```
-stv chicago_election
+stv scrape honduras_election
 ```
 
 ## Scraper Runners
