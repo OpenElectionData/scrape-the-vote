@@ -7,6 +7,13 @@ Key idea -- seperate the site-specific scraping code completely from storage
 
 ## Setup
 
+Clone this repo & install requirements:
+```
+git clone https://github.com/datamade/scrape-the-vote.git
+cd scrape-the-vote
+pip install -r requirements.txt
+```
+
 Create a config file from the config example:
 
 ```
