@@ -34,16 +34,6 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 - `election_id` attribute
 - `scrape` method. The scrape method should be a generator that yields a tuple like `('url_to_image', None)` if we can GET the image or or `(base_url, data)` if we have to make a POST request to get the image, where `data` is the post request.
 
-If running stv for the first time, run
-```
-stv init
-```
-
-To run a scraper, the user will use the `stv` command line tool. For example, to run a scraper called ```honduras_election```, use
-
-```
-stv scrape honduras_election
-```
 
 ## Scraper Runners
 `stv` will be responsible for doing a few things
@@ -55,6 +45,15 @@ stv scrape honduras_election
 - renaming images if appropriate, i.e. this image seems to be newer version of existing image 
 - uploading images, when appropriate, to the appropriate DocumentCloud bucket
 
+If using the ```stv``` command line tool for the first time, run
+```
+stv init
+```
+
+To run a scraper, use the `stv scrape` command. For example, to run a scraper called ```honduras_election```, use
+```
+stv scrape honduras_election
+```
 
 # Build order
 - Write a scraper for an electoin
