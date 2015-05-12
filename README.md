@@ -7,15 +7,19 @@ Key idea -- seperate the site-specific scraping code completely from storage
 
 ## Setup
 
-Clone this repo & install requirements:
+Clone this repo & install requirements (make sure pip is installed):
 ```
 git clone https://github.com/datamade/scrape-the-vote.git
 cd scrape-the-vote
 pip install -r requirements.txt
 ```
 
-Create a config file from the config example:
+Create a sqlite database:
+```
+sqlite3 documents.db
+```
 
+Create a config file from the config example:
 ```
 cp stv/config.example.py stv/config.py
 ```
@@ -29,6 +33,11 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 
 - `election_id` attribute
 - `scrape` method. The scrape method should be a generator that yields a tuple like `('url_to_image', None)` if we can GET the image or or `(base_url, data)` if we have to make a POST request to get the image, where `data` is the post request.
+
+If running stv for the first time, run
+```
+stv init
+```
 
 To run a scraper, the user will use the `stv` command line tool. For example, to run a scraper called ```honduras_election```, use
 
