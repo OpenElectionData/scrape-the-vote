@@ -24,6 +24,7 @@ class Scraper(scrapelib.Scraper):
                                                 header_func=header_func )
         self.base_url = "http://www.cec.md"
         self.election_id = 2
+        self.dc_project = 'Moldova'
 
     
     def crawl(self):

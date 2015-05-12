@@ -55,18 +55,19 @@ def init(args) :
         print('Please specify a scraper name')
 
 def scrape(args) :
-    dc_project = 'ndi'
-    img_dir = 'images/'
-
-    client = DocumentCloud(DC_USER, DC_PW)
-    project, created = client.projects.get_or_create_by_title(dc_project)
+    dc_project = 'ndi'  # default document cloud project
+    img_dir = 'images/' # the local directory where images will be downloaded
 
     if not os.path.exists(img_dir):
         os.makedirs(img_dir)
 
-    if args.scrapername:   
+    if args.scrapername:
         module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
         scraper = getattr(module, 'Scraper')()
+        if scraper.dc_project:
+            dc_project = scraper.dc_project
+        client = DocumentCloud(DC_USER, DC_PW)
+        project, created = client.projects.get_or_create_by_title(dc_project)
         images = scraper.crawl()
 
         for image in images:
