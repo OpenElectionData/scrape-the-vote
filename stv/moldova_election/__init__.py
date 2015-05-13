@@ -53,13 +53,13 @@ class Scraper(scrapelib.Scraper):
             for sector_name, img_url in zip(sector_names, img_urls):
                 print "SECTOR:   ", sector_name
                 img_url = self.base_url+img_url
-                img_metadata['hierarchy'] = '/'+city_name.encode('utf-8')+'/'+sector_name.encode('utf-8')
+                img_metadata['hierarchy'] = '/'+city_name+'/'+sector_name
 
                 yield (img_url, img_metadata, None)
 
             if not sector_names:
                 img_url = self.base_url+tree.xpath("//div[@id='print_div']//a/@href")[0]
-                img_metadata['hierarchy'] = '/'+city_name.encode('utf-8')
+                img_metadata['hierarchy'] = '/'+city_name
 
                 yield (img_url, img_metadata, None)
 
