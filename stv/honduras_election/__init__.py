@@ -15,7 +15,8 @@ class Scraper(scrapelib.Scraper):
                     retry_wait_seconds=5,
                     header_func=None,
                     url_pattern=None,
-                    string_on_page=None ):
+                    string_on_page=None,
+                    **kwargs ):
 
         super(Scraper, self).__init__(  raise_errors=raise_errors,
                                                 requests_per_minute=requests_per_minute,

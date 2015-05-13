@@ -25,6 +25,12 @@ def dispatch():
 
     sub_scrape.add_argument(dest='scrapername', help='the name of the scraper to run')
     sub_scrape.set_defaults(func=scrape)
+    sub_scrape.add_argument("--retry-attempts", type=int,
+                    help="the number of times the scraper should attempt to access a page")
+    sub_scrape.add_argument("--retry-wait-seconds", type=int,
+                    help="the number of seconds to wait before re-trying to access a page")
+    sub_scrape.add_argument("--requests-per-minute", type=int,
+                    help="the number of requests per minute")
 
     args = parser.parse_args()
     args.func(args)
@@ -64,7 +70,17 @@ def scrape(args) :
 
     if args.scrapername:
         module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
-        scraper = getattr(module, 'Scraper')()
+
+        extra_args = {}
+        if args.retry_attempts:
+            extra_args['retry_attempts'] = args.retry_attempts
+        if args.retry_wait_seconds:
+            extra_args['retry_wait_seconds'] = args.retry_wait_seconds
+        if args.requests_per_minute:
+            extra_args['requests_per_minute'] = args.requests_per_minute
+
+        scraper = getattr(module, 'Scraper')(**extra_args)
+
         if scraper.dc_project:
             dc_project = scraper.dc_project
         client = DocumentCloud(DC_USER, DC_PW)
