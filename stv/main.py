@@ -73,21 +73,30 @@ def scrape(args) :
 
         for image in images:
             print("url: %s" %image[0])
+            file_dl_error = False
             head, tail = os.path.split(image[0])
             if os.path.exists(img_dir+tail):
-                print("%s already exists" %tail)
+                print("%s already exists locally in %s" %(tail, img_dir))
             else:
                 if not image[2]: # no post data required
-                    r = scraper.get(image[0], stream=True)
+                    try:
+                        r = scraper.get(image[0], stream=True)
+                    except:
+                        file_dl_error = True
+                        print("*ERROR* downloading file from %s" %image[0])
                 else: # post data required
-                    r = scraper.post(image[0], data=image[2], stream=True)
+                    try:
+                        r = scraper.post(image[0], data=image[2], stream=True)
+                    except:
+                        file_dl_error = True
+                        print("*ERROR* downloading file from %s" %image[0])
 
                 hasher = hashlib.sha1()
                 file_hash = ''
                 metadata = image[1]
                 timestamp_server = ''
                 timestamp_local = ''
-                if r.status_code == 200: #what to do for other status codes?
+                if r.status_code == 200 and not file_dl_error: #what to do for other status codes?
                     with open(img_dir+tail, 'wb') as f:
                         for chunk in r.iter_content(chunk_size=1024):
                             hasher.update(chunk)
@@ -114,13 +123,15 @@ def scrape(args) :
                     cur.execute(insert_str,(metadata['election_id'],image[0],tail,file_hash,metadata['hierarchy'],timestamp_server,timestamp_local))
                     con.commit()
 
-                    if not is_duplicate:
+                    if not is_duplicate and not file_dl_error:
                         # do something here if image is an update of an image we've already seen
 
                         # uploading image to document cloud
-                        obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata.encode('ascii'))
+                        metadata['hierarchy'] = metadata['hierarchy'].encode('utf-8')
+                        obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
+
                     
-                    #delete image file here
+                #delete image file here
 
     else:
         print('Please specify a scraper name')
