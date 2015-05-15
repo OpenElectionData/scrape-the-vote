@@ -14,17 +14,12 @@ cd scrape-the-vote
 pip install -r requirements.txt
 ```
 
-Create a sqlite database:
-```
-sqlite3 documents.db
-```
-
 Create a config file from the config example:
 ```
 cp stv/config.example.py stv/config.py
 ```
 
-In ```config.py```, enter your documentcloud credentials.
+Open ```config.py``` and edit the values of ```DC_USER``` and ```DC_PW``` with your documentcloud credentials.
 
 ## Scrapers
 Each election will be it's own module. The scraper will be placed in the `__init__.py` of the module.
