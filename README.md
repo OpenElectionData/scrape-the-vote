@@ -21,6 +21,11 @@ cp stv/config.example.py stv/config.py
 
 Open ```config.py``` and edit the values of ```DC_USER``` and ```DC_PW``` with your documentcloud credentials.
 
+Then, run:
+```
+python setup.py develop
+```
+
 ## Scrapers
 Each election will be it's own module. The scraper will be placed in the `__init__.py` of the module.
 
