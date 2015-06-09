@@ -19,6 +19,7 @@ setup(
     entry_points={
         'console_scripts': [
             'stv = stv.main:dispatch',
+            'dispatch = stv.main:hidden_dispatch'
         ]
     }
 )
