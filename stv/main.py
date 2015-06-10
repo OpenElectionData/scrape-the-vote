@@ -12,6 +12,7 @@ from .config import DC_USER, DC_PW
 import sqlite3
 import hashlib
 import subprocess
+import time
 
 
 def dispatch():
@@ -77,7 +78,7 @@ def init(args) :
                     'url TEXT,'                             \
                     'hierarchy TEXT,'                       \
                     'post_data TEXT,'                       \
-                    'is_seen INTEGER,'                      \
+                    'is_seen INTEGER'                      \
                     ');'
 
         cur.execute(create_docs_sql)
@@ -141,11 +142,16 @@ def crawl(args) :
     images = scraper.crawl()
 
     for image in images:
-        print("saving an image")
+        con = sqlite3.connect('documents.db')
 
-        #########################
-        ######## SAVE IMAGES HERE
-        #########################
+        with con:
+            cur = con.cursor()
+            insert_str = 'INSERT INTO temp_documents \
+                        (url,hierarchy,post_data,is_seen) \
+                        VALUES (?,?,?,?);'
+            cur.execute(insert_str,(image[0],image[1]['hierarchy'],image[2],False))
+            con.commit()
+
 
 def upload(args) :
 
@@ -160,74 +166,89 @@ def upload(args) :
     module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
     scraper = getattr(module, 'Scraper')()
 
-    #########################
-    ######## READ IMAGES HERE
-    #########################
-
     if scraper.dc_project:
         dc_project = scraper.dc_project
     client = DocumentCloud(DC_USER, DC_PW)
     project, created = client.projects.get_or_create_by_title(dc_project)
 
-    for image in images:
+    if scraper.election_id:
+        election_id = scraper.election_id
 
-        print("url: %s" %image[0])
-        file_dl_error = False
-        head, tail = os.path.split(image[0])
+    con = sqlite3.connect('documents.db')
 
-        if os.path.exists(img_dir+tail):
-            os.remove(img_dir+tail)
-
-        if not image[2]: # no post data required
-            try:
-                r = scraper.get(image[0], stream=True)
-            except:
-                file_dl_error = True
-                print("*ERROR* downloading file from %s" %image[0])
-        else: # post data required
-            try:
-                r = scraper.post(image[0], data=image[2], stream=True)
-            except:
-                file_dl_error = True
-                print("*ERROR* downloading file from %s" %image[0])
-
-        hasher = hashlib.sha1()
-        file_hash = ''
-        metadata = image[1]
-        timestamp_server = ''
-        timestamp_local = ''
-        if r.status_code == 200 and not file_dl_error: #what to do for other status codes?
-            with open(img_dir+tail, 'wb') as f:
-                for chunk in r.iter_content(chunk_size=1024):
-                    hasher.update(chunk)
-                    f.write(chunk)
-                    f.flush()
-            file_hash = hasher.hexdigest()
-            timestamp_server = r.headers['last-modified'] if 'last-modified' in r.headers else ''
-            timestamp_local = r.headers['date'] if 'date' in r.headers else ''
-        
-        # adding image to documents table
-        con = sqlite3.connect('documents.db')
-
+    while True:
         with con:
             cur = con.cursor()
-            insert_str = 'INSERT INTO documents \
-                        (election_id,url,name,file_hash,hierarchy,timestamp_server,timestamp_local) \
-                        VALUES (?,?,?,?,?,?,?);'
-            q_update = 'SELECT * FROM documents where url=? and file_hash!=? and file_hash!=""'
-            q_duplicate = 'SELECT * FROM documents where url=? and file_hash=?'
-            cur.execute(q_update,(image[0],file_hash))
-            is_update = cur.fetchone()
-            cur.execute(q_duplicate,(image[0],file_hash))
-            is_duplicate = cur.fetchone()
-            cur.execute(insert_str,(metadata['election_id'],image[0],tail,file_hash,metadata['hierarchy'],timestamp_server,timestamp_local))
-            con.commit()
+            image_q = 'SELECT * FROM temp_documents where is_seen=0'
+            cur.execute(image_q)
+            image = cur.fetchone()
+        
+        if image:
+            image_temp_id = image[0]
+            file_dl_error = False
+            head, tail = os.path.split(image[1])
 
-            if not is_duplicate and not file_dl_error:
-                # do something here if image is an update of an image we've already seen
+            if os.path.exists(img_dir+tail):
+                os.remove(img_dir+tail)
 
-                # uploading image to document cloud
-                metadata['hierarchy'] = metadata['hierarchy'].encode('utf-8')
-                obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
+            if not image[3]: # no post data required
+                try:
+                    r = scraper.get(image[1], stream=True)
+                except:
+                    file_dl_error = True
+                    print("*ERROR* downloading file from %s" %image[1])
+            else: # post data required
+                try:
+                    r = scraper.post(image[1], data=image[3], stream=True)
+                except:
+                    file_dl_error = True
+                    print("*ERROR* downloading file from %s" %image[1])
 
-        os.remove(img_dir+tail)
+            hasher = hashlib.sha1()
+            file_hash = ''
+            hierarchy = image[2]
+            timestamp_server = ''
+            timestamp_local = ''
+            if r.status_code == 200 and not file_dl_error: #what to do for other status codes?
+                with open(img_dir+tail, 'wb') as f:
+                    for chunk in r.iter_content(chunk_size=1024):
+                        hasher.update(chunk)
+                        f.write(chunk)
+                        f.flush()
+                file_hash = hasher.hexdigest()
+                timestamp_server = r.headers['last-modified'] if 'last-modified' in r.headers else ''
+                timestamp_local = r.headers['date'] if 'date' in r.headers else ''
+            
+            # adding image to documents table
+            con = sqlite3.connect('documents.db')
+
+            with con:
+                cur = con.cursor()
+                insert_str = 'INSERT INTO documents \
+                            (election_id,url,name,file_hash,hierarchy,timestamp_server,timestamp_local) \
+                            VALUES (?,?,?,?,?,?,?);'
+                q_update = 'SELECT * FROM documents where url=? and file_hash!=? and file_hash!=""'
+                q_duplicate = 'SELECT * FROM documents where url=? and file_hash=?'
+                q_mark_seen = 'UPDATE temp_documents SET is_seen=? where id=?'
+                cur.execute(q_mark_seen,(1, image_temp_id))
+                cur.execute(q_update,(image[1],file_hash))
+                is_update = cur.fetchone()
+                cur.execute(q_duplicate,(image[1],file_hash))
+                is_duplicate = cur.fetchone()
+                cur.execute(insert_str,(election_id,image[1],tail,file_hash,hierarchy,timestamp_server,timestamp_local))
+                con.commit()
+
+                if not is_duplicate and not file_dl_error:
+                    # do something here if image is an update of an image we've already seen
+
+                    metadata={}
+                    # uploading image to document cloud
+                    metadata['hierarchy'] = hierarchy.encode('utf-8')
+                    metadata['election_id'] = str(election_id)
+                    metadata['timestamp_local'] = timestamp_local
+                    metadata['timestamp_server'] = timestamp_server
+                    obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
+
+            os.remove(img_dir+tail)
+        else:
+            time.sleep(5)
