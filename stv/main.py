@@ -247,7 +247,7 @@ def upload(args) :
                     metadata['election_id'] = str(election_id)
                     metadata['timestamp_local'] = timestamp_local
                     metadata['timestamp_server'] = timestamp_server
-                    obj = client.documents.upload(img_dir+tail, project=str(project.id), data=metadata)
+                    obj = client.documents.upload(img_dir+tail, access='public', project=str(project.id), data=metadata)
 
             os.remove(img_dir+tail)
         else:
