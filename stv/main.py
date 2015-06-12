@@ -135,10 +135,6 @@ def crawl(args) :
     module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
     scraper = getattr(module, 'Scraper')(**extra_args)
 
-    if scraper.dc_project:
-        dc_project = scraper.dc_project
-    client = DocumentCloud(DC_USER, DC_PW)
-    project, created = client.projects.get_or_create_by_title(dc_project)
     images = scraper.crawl()
 
     for image in images:
