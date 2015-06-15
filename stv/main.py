@@ -68,6 +68,7 @@ def init(args) :
         create_docs_sql = 'CREATE TABLE IF NOT EXISTS documents ('  \
                     'id INTEGER PRIMARY KEY,'               \
                     'election_id INTEGER,'                  \
+                    'scraper_name TEXT,'                    \
                     'url TEXT,'                             \
                     'name TEXT,'                            \
                     'file_hash TEXT,'                       \
@@ -77,6 +78,7 @@ def init(args) :
                     ');'
         create_temp_dump_sql = 'CREATE TABLE IF NOT EXISTS temp_documents ('  \
                     'id INTEGER PRIMARY KEY,'               \
+                    'scraper_name TEXT,'                    \
                     'url TEXT,'                             \
                     'hierarchy TEXT,'                       \
                     'post_data TEXT,'                       \
@@ -146,12 +148,17 @@ def crawl(args) :
         con = sqlite3.connect('documents.db')
         
         insert_str = u'INSERT INTO temp_documents \
-                       (url,hierarchy,post_data,is_seen) \
-                       VALUES (?,?,?,?);'
+                       (scraper_name, url, hierarchy, post_data, is_seen) \
+                       VALUES (?,?,?,?,?);'
         
         try:
             with con:
-                con.execute(insert_str,(image[0],image[1]['hierarchy'],image[2],False))
+                con.execute(insert_str,(args.scrapername, 
+                                        image[0],
+                                        image[1]['hierarchy'],
+                                        image[2],
+                                        False))
+
         except sqlite3.OperationalError as e:
             time.sleep(1)
             if 'database is locked' in str(e):
@@ -160,7 +167,11 @@ def crawl(args) :
                 while i < 10:
                     try:
                         with con:
-                            con.execute(insert_str,(image[0],image[1]['hierarchy'],image[2],False))
+                            con.execute(insert_str,(args.scrapername,
+                                                    image[0],
+                                                    image[1]['hierarchy'],
+                                                    image[2],
+                                                    False))
                         break
                     except sqlite3.OperationalError as e:
                         print(e)
@@ -194,8 +205,8 @@ def upload(args) :
         con = sqlite3.connect('documents.db')
         
         cur = con.cursor()
-        image_q = 'SELECT * FROM temp_documents where is_seen=0'
-        cur.execute(image_q)
+        image_q = 'SELECT * FROM temp_documents WHERE is_seen=0 AND scraper_name = ?'
+        cur.execute(image_q, (args.scrapername,))
         image = cur.fetchone()
         con.close()
         
