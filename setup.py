@@ -7,8 +7,7 @@ reqs = [
     'scrapelib',
     'beautifulsoup4',
     'lxml',
-    'python-documentcloud',
-    'hashlib'
+    'python-documentcloud'
 ]
 
 setup(

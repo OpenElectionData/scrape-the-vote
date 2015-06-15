@@ -105,9 +105,12 @@ def kickoff_scrape(args) :
                 extra_args['requests_per_minute'] = args.requests_per_minute
 
             #scrape(args, extra_args)
+            
             procs = [   subprocess.Popen(['dispatch', 'crawl', args.scrapername]),
                         subprocess.Popen(['dispatch', 'upload', args.scrapername])  ]
-
+            
+            # procs = [   subprocess.Popen(['dispatch', 'crawl', args.scrapername]) ]
+            
             for proc in procs:
                 proc.wait()
 
@@ -142,9 +145,9 @@ def crawl(args) :
 
         with con:
             cur = con.cursor()
-            insert_str = 'INSERT INTO temp_documents \
-                        (url,hierarchy,post_data,is_seen) \
-                        VALUES (?,?,?,?);'
+            insert_str = u'INSERT INTO temp_documents \
+                           (url,hierarchy,post_data,is_seen) \
+                           VALUES (?,?,?,?);'
             cur.execute(insert_str,(image[0],image[1]['hierarchy'],image[2],False))
             con.commit()
 
