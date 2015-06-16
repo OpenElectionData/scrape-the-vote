@@ -232,7 +232,7 @@ def upload(args) :
                 req_kwargs = {'method': 'POST', body: post_data}
             with open(img_dir+tail, 'wb') as f:
                 try:
-                    _, r = scraper.urlretrieve(image[1], **req_kwargs)
+                    _, r = scraper.urlretrieve(image[1].encode('utf-8'), **req_kwargs)
                 except (requests.HTTPError, socket.error):
                     i = 0
                     while i < 10:
