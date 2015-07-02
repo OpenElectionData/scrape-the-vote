@@ -17,27 +17,30 @@ import requests
 import socket
 from datetime import datetime
 
+# this is for the 'stv' entry point
 def dispatch():
 
     parser = ArgumentParser(description="")
     parser_subparsers = parser.add_subparsers()
     sub_init = parser_subparsers.add_parser('init', help='creates documents.db and tables to store crawled URLs')
-    sub_scrape = parser_subparsers.add_parser('scrape', help='dispatches a scraper')
+    sub_kickoff_scrape = parser_subparsers.add_parser('dispatch', help='dispatches a scraper (crawling + uploading)')
+    sub_testcrawl = parser_subparsers.add_parser('testcrawl', help='only dispatches the crawler in a scraper (skips uploading)')
 
     sub_init.set_defaults(func=init)
 
-    sub_scrape.add_argument(dest='scrapername', help='the name of the scraper to run')
-    sub_scrape.set_defaults(func=kickoff_scrape)
-    sub_scrape.add_argument("--retry-attempts", type=int,
+    sub_kickoff_scrape.add_argument(dest='scrapername', help='the name of the scraper to run')
+    sub_kickoff_scrape.set_defaults(func=kickoff_scrape)
+    sub_kickoff_scrape.add_argument("--retry-attempts", type=int,
                     help="the number of times the scraper should attempt to access a page")
-    sub_scrape.add_argument("--retry-wait-seconds", type=int,
+    sub_kickoff_scrape.add_argument("--retry-wait-seconds", type=int,
                     help="the number of seconds to wait before re-trying to access a page")
-    sub_scrape.add_argument("--requests-per-minute", type=int,
+    sub_kickoff_scrape.add_argument("--requests-per-minute", type=int,
                     help="the number of requests per minute")
 
     args = parser.parse_args()
     args.func(args)
 
+# this is for the 'hidden_dispatch' entry point
 def hidden_dispatch():
 
     parser = ArgumentParser(description="")
@@ -100,14 +103,10 @@ def kickoff_scrape(args) :
                 extra_args['retry_wait_seconds'] = args.retry_wait_seconds
             if args.requests_per_minute:
                 extra_args['requests_per_minute'] = args.requests_per_minute
-
-            #scrape(args, extra_args)
-            
-            procs = [   subprocess.Popen(['dispatch', 'crawl', args.scrapername]),
-                        subprocess.Popen(['dispatch', 'upload', args.scrapername])  ]
-            
-            # procs = [   subprocess.Popen(['dispatch', 'crawl', args.scrapername]) ]
-            
+                        
+            procs = [   subprocess.Popen(['hidden_dispatch', 'crawl', args.scrapername]),
+                        subprocess.Popen(['hidden_dispatch', 'upload', args.scrapername])  ]
+                        
             for proc in procs:
                 proc.wait()
 
@@ -115,8 +114,6 @@ def kickoff_scrape(args) :
         print('Please specify a scraper name')
 
 def crawl(args) :
-
-    print("CRAWL\n\n")
 
     dc_project = 'ndi'  # default document cloud project
     img_dir = 'images/' # the local directory where images will be downloaded
@@ -173,8 +170,6 @@ def crawl(args) :
 
 
 def upload(args) :
-
-    print("UPLOAD\n\n")
 
     dc_project = 'ndi'  # default document cloud project
     img_dir = 'images/' # the local directory where images will be downloaded

@@ -29,7 +29,7 @@ Design considerations:
   ```
   python setup.py develop
   ```
-  This will allow you to use the stv command line tool. You can run `stv -h` at the command line to see the available commands - `init` & `scrape`.
+  This will allow you to use the stv command line tool. You can run `stv -h` at the command line to see the available commands - `init` & `dispatch`.
   
 5. **Initialize the scraper runner**
   ```
@@ -55,9 +55,9 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 - renaming images if appropriate, i.e. this image seems to be newer version of existing image 
 - uploading images, when appropriate, to the appropriate DocumentCloud bucket
 
-To run a scraper, use the `stv scrape` command. For example, to run a scraper called ```honduras_election```, use
+To run a scraper, use the `stv dispatch` command. For example, to run a scraper called ```honduras_election```, use
 ```
-stv scrape honduras_election
+stv dispatch honduras_election
 ```
 
 # Build order
