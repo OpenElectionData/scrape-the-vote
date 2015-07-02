@@ -21,10 +21,9 @@ def dispatch():
 
     parser = ArgumentParser(description="")
     parser_subparsers = parser.add_subparsers()
-    sub_init = parser_subparsers.add_parser('init')
-    sub_scrape = parser_subparsers.add_parser('scrape')
+    sub_init = parser_subparsers.add_parser('init', help='creates documents.db and tables to store crawled URLs')
+    sub_scrape = parser_subparsers.add_parser('scrape', help='dispatches a scraper')
 
-    sub_init.add_argument(dest='scrapername', help='the name of the scraper to initialize')
     sub_init.set_defaults(func=init)
 
     sub_scrape.add_argument(dest='scrapername', help='the name of the scraper to run')
@@ -88,12 +87,6 @@ def init(args) :
         cur.execute(create_docs_sql)
         cur.execute(create_temp_dump_sql)
         con.commit()
-
-    # if args.scrapername:
-
-    #     # create project on document cloud
-    # else:
-    #     print('Please specify a scraper name')
 
 def kickoff_scrape(args) :
 
