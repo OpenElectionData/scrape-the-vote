@@ -3,7 +3,8 @@ A scraper for international election results.
 
 Design considerations:
 - the site-specific scraping (grabbing URLs of images) is completely separate from storage (keeping track of what has been downloaded, uploading images)
-- each site specific scraper is uploaded to its own project on Document Cloud
+- each site-specific election scraper will be it's own module. each scraper will store images in its own project on DocumentCloud.
+- a local sqlite3 database will keep track of what urls have been seen by the crawler, & only new urls or existing urls with updated files will be uploaded to DocumentCloud
 
 ## Setup
 1. **Make sure you have [python](https://www.python.org/), [git](http://www.git-scm.com/), and [pip](https://pip.pypa.io/en/stable/) installed**
@@ -23,7 +24,7 @@ Design considerations:
   cp stv/config.example.py stv/config.py
   ```
 
-  Open ```config.py``` in a text editor and edit the values of ```DC_USER``` and ```DC_PW``` with your documentcloud credentials.
+  Open ```config.py``` in a text editor and edit the values of ```DC_USER``` and ```DC_PW``` with your DocumentCloud credentials.
 
 4. **Build this package**
   ```
@@ -46,26 +47,19 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 
 
 ## Scraper Runners
-`stv` will be responsible for doing a few things
+The `stv` command line tool will be responsible for doing a few things
 
-- creating a DocumentCloud collection based on the election_id of a scraper
-- dispatching the scraper
-- downloading the images/docs from the urls coming from the scraper
-- comparing these images to previously seen images
-- renaming images if appropriate, i.e. this image seems to be newer version of existing image 
-- uploading images, when appropriate, to the appropriate DocumentCloud bucket
+- dispatching the scraper (to crawl an election website in search of image URLs)
+- creating a DocumentCloud project based on the `dc_project` attribute of a scraper
+- storing the image urls & relevant metadata coming from the scraper
+- downloading images from the urls coming from the scraper
+- comparing downloaded images to previously seen images (via URLs & file hash)
+- uploading images, when appropriate, to DocumentCloud
 
-To run a scraper, use the `stv dispatch` command. For example, to run a scraper called ```honduras_election```, use
+
+#### Running a scraper
+To run a scraper, use the `stv scrape` command. For example, to run a scraper called ```honduras_election```, use
+
 ```
 stv dispatch honduras_election
 ```
-
-# Build order
-- Write a scraper for an electoin
-- Have `stv` dispatch that scraper from the command line
-- Have `stv` download the first five image from that scraper
-- Have `stv` uplaod the first five images. The downloading and uploading of images should be asynchrounous.
-
-
-
-
