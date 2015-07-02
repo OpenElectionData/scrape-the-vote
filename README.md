@@ -30,7 +30,7 @@ Design considerations:
   ```
   python setup.py develop
   ```
-  This will allow you to use the stv command line tool. You can run `stv -h` at the command line to see the available commands - `init` & `dispatch`.
+  This will allow you to use the stv command line tool. You can run `stv -h` at the command line to see the available commands - `init`, `dispatch`, &`testcrawl`.
   
 5. **Initialize the scraper runner**
   ```
@@ -40,11 +40,15 @@ Design considerations:
 ## Scrapers
 Each election will be it's own module. The scraper will be placed in the `__init__.py` of the module.
 
-Scrapers are subclasses of scraperlib.Scraper, and most contain
+Scrapers are subclasses of scraperlib.Scraper, and must contain
 
 - `election_id` attribute
-- `scrape` method. The scrape method should be a generator that yields a tuple like `('url_to_image', None)` if we can GET the image or or `(base_url, data)` if we have to make a POST request to get the image, where `data` is the post request.
+- `crawl` method. This method should be a generator that yields a tuple `(url, metadata, post_data)` for each image, where:
+  - `url` is the url of the image
+  - `metadata` is any information about the hierarchy of the pages to get to the image, represented as a string (e.g. `'/ATLANTIDA/LA CEIBA/CENTRO EVANGELICO BETHEL/1'`)
+  - `post_data` is None if we can GET the image, or the post data if we have to make a POST request
 
+The `dc_project` attribute specifies the name of the DocumentCloud project where images will be uploaded.
 
 ## Scraper Runners
 The `stv` command line tool will be responsible for doing a few things
@@ -58,8 +62,21 @@ The `stv` command line tool will be responsible for doing a few things
 
 
 #### Running a scraper
-To run a scraper, use the `stv scrape` command. For example, to run a scraper called ```honduras_election```, use
+To run a scraper, use the `stv dispatch` command. For example, to run a scraper called `honduras_election`, use
 
 ```
 stv dispatch honduras_election
+```
+
+You can also add additional arguments to the command (to see all available arguments, run `stv dispatch -h`). For example, to run the `honduras_election` scraper with 20 requsts per minute, use
+
+```
+stv dispatch honduras_election --requests-per-minute=20
+```
+
+#### Testing a scraper
+To test a scraper without storing URLs and uploading images to DocumentCloud, use the `stv testcrawl` command. For example, to run only the crawler for the ```honduras_election``` scraper, use
+
+```
+stv testcrawl honduras_election
 ```
