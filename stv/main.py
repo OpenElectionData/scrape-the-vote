@@ -45,6 +45,8 @@ def dispatch():
                     help="the number of seconds to wait before re-trying to access a page")
     sub_testcrawl.add_argument("--requests-per-minute", type=int,
                     help="the number of requests per minute")
+    sub_testcrawl.add_argument("--image-limit", type=int,
+                    help="the number of urls to return (defaults to 5)")
 
     args = parser.parse_args()
     args.func(args)
@@ -208,9 +210,9 @@ def upload(args) :
         con.close()
         
         if image:
-            image_temp_id, head_tail, hierarchy, post_data = image[:4] 
+            image_temp_id, scraper_name, url, hierarchy, post_data = image[:5] 
             
-            head, tail = os.path.split(head_tail)
+            head, tail = os.path.split(url)
 
             if os.path.exists(img_dir+tail):
                 os.remove(img_dir+tail)
@@ -219,27 +221,26 @@ def upload(args) :
 
             hasher = hashlib.sha1()
             file_hash = ''
-            hierarchy = image[2]
             timestamp_server = ''
             timestamp_local = ''
             
             req_kwargs = {}
 
             if post_data:
-                req_kwargs = {'method': 'POST', body: post_data}
+                req_kwargs = {'method': 'POST', 'body': post_data}
             with open(img_dir+tail, 'wb') as f:
                 try:
-                    _, r = scraper.urlretrieve(image[1].encode('utf-8'), **req_kwargs)
+                    _, r = scraper.urlretrieve(url.encode('utf-8'), **req_kwargs)
                 except (requests.HTTPError, socket.error):
                     i = 0
                     while i < 10:
                         time.sleep(1)
                         try:
-                            _, r = scraper.urlretrieve(image[1], **req_kwargs)
+                            _, r = scraper.urlretrieve(url, **req_kwargs)
                             break
                         except (requests.HTTPError, socket.error):
                             i += 1
-                            print('retrying %s' % image[1])
+                            print('retrying %s' % url)
                             continue
                 f.write(r.content)
                 hasher.update(r.content)
@@ -259,11 +260,11 @@ def upload(args) :
 
             cur = con.cursor()
             cur.execute(q_mark_seen,(1, image_temp_id))
-            cur.execute(q_update,(image[1],file_hash))
+            cur.execute(q_update,(url,file_hash))
             is_update = cur.fetchone()
-            cur.execute(q_duplicate,(image[1],file_hash))
+            cur.execute(q_duplicate,(url,file_hash))
             is_duplicate = cur.fetchone()
-            cur.execute(insert_str,(election_id,image[1],tail,file_hash,hierarchy,timestamp_server,timestamp_local))
+            cur.execute(insert_str,(election_id,url,tail,file_hash,hierarchy,timestamp_server,timestamp_local))
             con.commit()
 
             con.close()
@@ -301,11 +302,15 @@ def testcrawl(args) :
     images = scraper.crawl()
 
     count = 0
+    if args.image_limit:
+        limit = args.image_limit
+    else:
+        limit = 5
     for image in images:
         print("\ngrabbed an image!")
         print(image)
         count += 1
-        if count == 5:
+        if count == limit:
             print("\ndone testing crawler")
             break
 
