@@ -1,30 +1,40 @@
 # scrape-the-vote
-Scraper for international election results
+A scraper for international election results. 
 
-Architecture.
-
-Key idea -- seperate the site-specific scraping code completely from storage
+Design considerations:
+- the site-specific scraping (grabbing URLs of images) is completely separate from storage (keeping track of what has been downloaded, uploading images)
+- each site specific scraper is uploaded to its own project on Document Cloud
 
 ## Setup
+1. **Make sure you have [python](https://www.python.org/), [git](http://www.git-scm.com/), and [pip](https://pip.pypa.io/en/stable/) installed**
+2. **Clone this repo & install requirements**
+  
+  ```
+  git clone https://github.com/datamade/scrape-the-vote.git
+  cd scrape-the-vote
+  pip install -r requirements.txt
+  ```
+  
+  *NOTE: Mac users might need [this lxml workaround](http://stackoverflow.com/questions/22313407/clang-error-unknown-argument-mno-fused-madd-python-package-installation-fa).*
+  
+3. **Create a config file from the config example**
+  
+  ```
+  cp stv/config.example.py stv/config.py
+  ```
 
-Clone this repo & install requirements (make sure pip is installed):
-```
-git clone https://github.com/datamade/scrape-the-vote.git
-cd scrape-the-vote
-pip install -r requirements.txt
-```
+  Open ```config.py``` in a text editor and edit the values of ```DC_USER``` and ```DC_PW``` with your documentcloud credentials.
 
-Create a config file from the config example:
-```
-cp stv/config.example.py stv/config.py
-```
-
-Open ```config.py``` and edit the values of ```DC_USER``` and ```DC_PW``` with your documentcloud credentials.
-
-Then, run:
-```
-python setup.py develop
-```
+4. **Build this package**
+  ```
+  python setup.py develop
+  ```
+  This will allow you to use the stv command line tool. You can run `stv -h` at the command line to see the available commands - `init` & `scrape`.
+  
+5. **Initialize the scraper runner**
+  ```
+  stv init
+  ```
 
 ## Scrapers
 Each election will be it's own module. The scraper will be placed in the `__init__.py` of the module.
@@ -44,11 +54,6 @@ Scrapers are subclasses of scraperlib.Scraper, and most contain
 - comparing these images to previously seen images
 - renaming images if appropriate, i.e. this image seems to be newer version of existing image 
 - uploading images, when appropriate, to the appropriate DocumentCloud bucket
-
-If using the ```stv``` command line tool for the first time, run
-```
-stv init
-```
 
 To run a scraper, use the `stv scrape` command. For example, to run a scraper called ```honduras_election```, use
 ```
