@@ -37,6 +37,15 @@ def dispatch():
     sub_kickoff_scrape.add_argument("--requests-per-minute", type=int,
                     help="the number of requests per minute")
 
+    sub_testcrawl.add_argument(dest='scrapername', help='the name of the scraper to run')
+    sub_testcrawl.set_defaults(func=testcrawl)
+    sub_testcrawl.add_argument("--retry-attempts", type=int,
+                    help="the number of times the scraper should attempt to access a page")
+    sub_testcrawl.add_argument("--retry-wait-seconds", type=int,
+                    help="the number of seconds to wait before re-trying to access a page")
+    sub_testcrawl.add_argument("--requests-per-minute", type=int,
+                    help="the number of requests per minute")
+
     args = parser.parse_args()
     args.func(args)
 
@@ -275,3 +284,28 @@ def upload(args) :
                 pass
         else:
             time.sleep(5)
+
+def testcrawl(args) :
+
+    extra_args = {}
+    if args.retry_attempts:
+        extra_args['retry_attempts'] = args.retry_attempts
+    if args.retry_wait_seconds:
+        extra_args['retry_wait_seconds'] = args.retry_wait_seconds
+    if args.requests_per_minute:
+        extra_args['requests_per_minute'] = args.requests_per_minute
+
+    module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
+    scraper = getattr(module, 'Scraper')(**extra_args)
+
+    images = scraper.crawl()
+
+    count = 0
+    for image in images:
+        print("\ngrabbed an image!")
+        print(image)
+        count += 1
+        if count == 5:
+            print("\ndone testing crawler")
+            break
+
