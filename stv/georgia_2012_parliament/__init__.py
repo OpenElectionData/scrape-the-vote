@@ -65,7 +65,7 @@ class Scraper(scrapelib.Scraper):
                         image_page = self._lxmlize(image_page_url)
                         image_url = image_page.xpath('//img/@src')[0]
 
-                        img_metadata['hierarchy'] = u'/%s/proportional/%s' % (meri_name, oqmi_number)
+                        img_metadata['hierarchy'] = u'/proportional/%s/%s' % (meri_name, oqmi_number)
                         
                         yield (image_url, img_metadata, None)
                         
@@ -75,6 +75,6 @@ class Scraper(scrapelib.Scraper):
                         image_page = self._lxmlize(image_page_url)
                         image_url = image_page.xpath('//img/@src')[0]
 
-                        img_metadata['hierarchy'] = u'/%s/majoritarian/%s' % (meri_name, oqmi_number)
+                        img_metadata['hierarchy'] = u'/majoritarian/%s/%s' % (meri_name, oqmi_number)
                         
                         yield (image_url, img_metadata, None)
