@@ -142,42 +142,43 @@ def crawl(args) :
 
     module = __import__('stv.%s' % args.scrapername, globals(), locals(), ['Scraper'])
     scraper = getattr(module, 'Scraper')(**extra_args)
-
-    images = scraper.crawl()
-
-    for image in images:
-        con = sqlite3.connect('documents.db')
+    
+    while True:
+        images = scraper.crawl()
         
-        insert_str = u'INSERT INTO temp_documents \
-                       (scraper_name, url, hierarchy, post_data, is_seen) \
-                       VALUES (?,?,?,?,?);'
-        
-        try:
-            with con:
-                con.execute(insert_str,(args.scrapername, 
-                                        image[0],
-                                        image[1]['hierarchy'],
-                                        image[2],
-                                        False))
+        for image in images:
+            con = sqlite3.connect('documents.db')
+            
+            insert_str = u'INSERT INTO temp_documents \
+                           (scraper_name, url, hierarchy, post_data, is_seen) \
+                           VALUES (?,?,?,?,?);'
+            
+            try:
+                with con:
+                    con.execute(insert_str,(args.scrapername, 
+                                            image[0],
+                                            image[1]['hierarchy'],
+                                            image[2],
+                                            False))
 
-        except sqlite3.OperationalError as e:
-            time.sleep(1)
-            if 'database is locked' in str(e):
-                print(e)
-                i = 0
-                while i < 10:
-                    try:
-                        with con:
-                            con.execute(insert_str,(args.scrapername,
-                                                    image[0],
-                                                    image[1]['hierarchy'],
-                                                    image[2],
-                                                    False))
-                        break
-                    except sqlite3.OperationalError as e:
-                        print(e)
-                        i += 1
-                        continue
+            except sqlite3.OperationalError as e:
+                time.sleep(1)
+                if 'database is locked' in str(e):
+                    print(e)
+                    i = 0
+                    while i < 10:
+                        try:
+                            with con:
+                                con.execute(insert_str,(args.scrapername,
+                                                        image[0],
+                                                        image[1]['hierarchy'],
+                                                        image[2],
+                                                        False))
+                            break
+                        except sqlite3.OperationalError as e:
+                            print(e)
+                            i += 1
+                            continue
 
 
 def upload(args) :
@@ -284,7 +285,7 @@ def upload(args) :
             except OSError:
                 pass
         else:
-            time.sleep(5)
+            time.sleep(1)
 
 def testcrawl(args) :
 
