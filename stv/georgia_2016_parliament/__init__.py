@@ -49,7 +49,7 @@ class Scraper(scrapelib.Scraper):
 
         for meri_name, oqmi_url in zip(meri_names, meri_urls):
             if oqmi_url != self.base_url:
-                meri_name = meri_name.split(' ', 1)[1]
+                # meri_name = meri_name.split(' ', 1)[1]
                 
                 oqmi_tree = self._lxmlize(oqmi_url)
                 cells = oqmi_tree.xpath("//td[@bgcolor='#EFEFEF']")
