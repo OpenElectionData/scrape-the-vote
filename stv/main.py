@@ -8,7 +8,7 @@ import os
 import shutil
 import fileinput
 from documentcloud import DocumentCloud
-from .config import DC_USER, DC_PW
+from .config import DC_USER, DC_PW, TRANSCRIBER_ENDPOINT
 import sqlite3
 import hashlib
 import subprocess
@@ -279,7 +279,22 @@ def upload(args) :
                 metadata['election_id'] = str(election_id)
                 metadata['timestamp_local'] = timestamp_local
                 metadata['timestamp_server'] = timestamp_server
-                obj = client.documents.upload(img_dir+tail, access='public', project=str(project.id), data=metadata)
+                obj = client.documents.upload(img_dir+tail, 
+                                              access='public', 
+                                              project=str(project.id), 
+                                              data=metadata)
+                
+                if TRANSCRIBER_ENDPOINT:
+                    payload = {
+                        'project_id': project.id, 
+                        'project_title': dc_project,
+                        'document_id': obj.id
+                    }
+                    try:
+                        r = requests.post(TRANSCRIBER_ENDPOINT, data=payload)
+                    except requests.exceptions.ConnectionError:
+                        pass
+
             try:
                 os.remove(img_dir+tail)
             except OSError:
